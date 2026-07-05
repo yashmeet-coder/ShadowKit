@@ -1,138 +1,181 @@
+````md
 # ShadowKit
 
-A starter kit for building **embeddable widgets** with React, [shadcn/ui](https://ui.shadcn.com), Tailwind CSS, and the **Shadow DOM**. It comes with a small **feedback widget** so you have something that actually works out of the box.
+A starter kit for building **embeddable widgets** with React, [shadcn/ui](https://ui.shadcn.com), Tailwind CSS, and the **Shadow DOM**. It ships with a simple **feedback widget** so you can clone the repo, run it, and immediately see a working example.
 
-Think of the feedback form as a placeholder. The real value here is the plumbing: everything you need to take a fully-styled React app and drop it onto someone else's website with a single `<script>` tag — without your CSS bleeding onto their page, or their CSS wrecking yours. Rip out the feedback form, put your own thing in, and the hard parts are already solved.
+The feedback form is only there as a demo. The real value of this project is everything underneath it. It gives you everything you need to take a fully styled React application and embed it on someone else's website with a single `<script>` tag, without your styles affecting the host page or the host page breaking your widget.
 
-## Why bother with the Shadow DOM?
+Replace the feedback form with your own UI and most of the difficult work is already done.
 
-Embeddable widgets have to survive on pages you don't own. And other people's pages are messy — global resets, `!important` everywhere, styles that assume they're the only thing on the page. Mount a normal React app into that environment and it's at the mercy of whatever CSS happens to be lying around (and yours will mess with theirs right back).
+## Why use the Shadow DOM?
 
-The Shadow DOM draws a hard line around your widget. Inside that boundary:
+Embeddable widgets have to live on websites you don't control, and those websites can contain all kinds of unexpected CSS. Global resets, aggressive selectors, and `!important` rules can completely change how your widget looks. At the same time, your own styles can accidentally affect the host page.
 
-- The host page's CSS **can't** reach in — except for a handful of inherited properties, which we wipe out with `:host { all: initial }`.
-- Your CSS **can't** leak out onto their page.
+The Shadow DOM solves both problems by creating an isolated styling boundary.
 
-Two separate worlds, no cross-contamination.
+Inside the shadow root:
 
-## How it fits together
+- The host page's CSS cannot style your widget, apart from a few inherited properties that are reset using `:host { all: initial }`.
+- Your widget's CSS stays completely inside the shadow root and never leaks onto the host page.
 
-```
+The result is a widget that looks exactly the same no matter where it's embedded.
+
+## Project structure
+
+```text
 ┌─ Host page ──────────────────────────────────────────────┐
-│  <div id="feedback-widget">                               │
-│    └─ <div> (React mount, created by main.jsx)            │
-│         └─ #shadow-root  ← created by react-shadow        │
-│              ├─ <style> …compiled Tailwind CSS…           │
-│              ├─ <div class="sdw-portal-root"/>  ← dialog  │
-│              │                                    portal  │
-│              │                                    target  │
-│              └─ <FeedbackWidget/>                         │
-└───────────────────────────────────────────────────────────┘
+│  <div id="feedback-widget">                              │
+│    └─ <div> (React mount, created by main.jsx)           │
+│         └─ #shadow-root  ← created by react-shadow       │
+│              ├─ <style> …compiled Tailwind CSS…          │
+│              ├─ <div class="sdw-portal-root"/>           │
+│              └─ <FeedbackWidget/>                        │
+└──────────────────────────────────────────────────────────┘
 ```
 
-Here's what each piece is doing:
+Here's what each file is responsible for.
 
-| File | What it's for |
-| --- | --- |
-| `src/main.jsx` | The public entry point — a plain `Widget` class on `window.ShadowKit` with `setConfig`, `init`, `update`, `open`, and `destroy`. It finds your `placement` element and mounts React into a `<div>` inside it. |
-| `src/App.jsx` | Sets up the shadow root (via `react-shadow`), injects the compiled CSS **inside** it, themes the widget through CSS variables on the host, and hands the dialog a portal target that lives in the shadow root. |
-| `src/index.css` | The Tailwind source, plus the `:host` reset and design tokens. Gets compiled into `src/styles.css`. |
-| `src/lib/utils.js` | The `cn()` helper, taught to play nicely with the `tw-` class prefix when merging. |
-| `src/components/ui/*` | The shadcn/ui primitives you'll actually use: `button`, `dialog`, `input`, `label`, `textarea`, `rating`. |
-| `src/components/FeedbackWidget.jsx` | The demo widget. This is the part you'll throw away and replace. |
+| File | Purpose |
+|------|---------|
+| `src/main.jsx` | Public entry point. Exposes a `Widget` class on `window.ShadowKit` with `setConfig`, `init`, `update`, `open`, and `destroy`. It finds the target element and mounts React into it. |
+| `src/App.jsx` | Creates the shadow root with `react-shadow`, injects the compiled CSS into it, applies theming through CSS variables, and provides a portal target for Radix components. |
+| `src/index.css` | Tailwind source, design tokens, and the `:host` reset. Compiled into `src/styles.css`. |
+| `src/lib/utils.js` | The `cn()` helper configured to work correctly with the `tw-` Tailwind prefix. |
+| `src/components/ui/*` | Reusable shadcn/ui components like buttons, dialogs, inputs, labels, textareas, and ratings. |
+| `src/components/FeedbackWidget.jsx` | The demo widget. This is the file you'll most likely replace with your own component. |
 
-### The three things that make Shadow DOM actually work
+## Three things that make this work
 
-These are the gotchas that trip everyone up. Get them right and the rest is easy.
+If you're building a Shadow DOM widget for the first time, these are the parts that usually cause problems.
 
-1. **The CSS goes *inside* the shadow root as an inline `<style>`.** A global stylesheet can't reach into a shadow root, so a normal Tailwind setup would render your widget completely unstyled. The trick: `App.jsx` imports the compiled CSS with `?inline` (as a string) and drops it in as a `<style>` tag right inside `root.div`.
+### 1. Tailwind CSS is injected into the shadow root
 
-2. **Tailwind is prefixed with `tw-` and set to `important`.** The prefix keeps our utility classes from colliding with any the host page already uses; `important` makes sure our styles win the ones that matter. It's all in `tailwind.config.js`.
+A normal stylesheet cannot style elements inside a shadow root.
 
-3. **Radix has to portal *into* the shadow root, not out of it.** Components like Dialog portal to `document.body` by default — which is outside the shadow root, i.e. exactly where none of our styles exist. So `App.jsx` grabs a `portalContainer` from inside the shadow root and passes it to `DialogContent`'s `container` prop. Miss this and your modal shows up as unstyled HTML.
+To solve this, `App.jsx` imports the compiled CSS using `?inline`, which gives us the CSS as a string. That string is injected into a `<style>` tag inside the shadow root, so every Tailwind utility is available where it's needed.
+
+### 2. Tailwind uses a prefix and `important`
+
+Tailwind is configured with:
+
+- a `tw-` prefix to avoid class name collisions with the host page
+- `important: true` so important utility classes aren't overridden by the host page's CSS
+
+Both settings live in `tailwind.config.js`.
+
+### 3. Radix portals stay inside the shadow root
+
+Radix components such as Dialog render into `document.body` by default.
+
+That doesn't work here because `document.body` lives outside the shadow root, where none of the widget's styles exist.
+
+Instead, `App.jsx` creates a portal container inside the shadow root and passes it to Radix's `container` prop. This keeps dialogs, popovers, and overlays fully styled and contained.
 
 ## Getting started
 
-### Running it locally
+### Run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the URL it prints. The demo page (`index.html`) deliberately loads the widget onto a page with its own styling so you can see the isolation holding up in real time.
+Open the URL printed by Vite. The demo page intentionally includes its own styles so you can verify that the widget remains isolated.
 
-> One heads-up: `App.jsx` imports `./styles.css?inline`, and that file is generated from `index.css`. Run `npm run dev:css` in a second terminal (or just `npm run build:css` once) so it exists while you're developing — otherwise you'll get an import error.
+One thing to keep in mind is that `App.jsx` imports `styles.css` using `?inline`. That file is generated from `index.css`, so you'll also need to run:
 
-### Building for production
+```bash
+npm run dev:css
+```
+
+or generate it once with:
+
+```bash
+npm run build:css
+```
+
+Otherwise the import won't exist during development.
+
+## Build for production
 
 ```bash
 npm run build
 ```
 
-You get a single self-contained UMD bundle at `dist/shadowkit.js`, with **all the CSS baked right in**. No separate stylesheet to host, no extra request — just one file to serve.
+This produces a single UMD bundle:
 
-### Dropping it onto a page
+```text
+dist/shadowkit.js
+```
+
+The bundle already contains all of the compiled CSS, so there is no separate stylesheet to host or additional network request.
+
+## Embedding the widget
 
 ```html
 <div id="my-widget"></div>
+
 <script src="https://your-cdn.com/shadowkit.js"></script>
+
 <script>
   ShadowKit.widget.setConfig({
-    placement: '#my-widget',
-    title: 'Send us feedback',
-    primaryColor: '#4f46e5',
-    apiUrl: 'https://your-api.com/feedback', // optional
-    onSubmit: (data) => console.log(data),   // optional
+    placement: "#my-widget",
+    title: "Send us feedback",
+    primaryColor: "#4f46e5",
+    apiUrl: "https://your-api.com/feedback",
+    onSubmit: (data) => console.log(data),
   });
+
   ShadowKit.widget.init();
 </script>
 ```
 
 ## Configuration
 
-| Option | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `placement` | CSS selector | `"#root"` | Where to mount the widget. |
-| `title` | string | `"Feedback"` | The dialog's title. |
-| `triggerText` | string | `"Feedback"` | Label on the floating trigger button. |
-| `primaryColor` | hex string | `null` | Accent color, applied as a CSS variable on the shadow host. |
-| `apiUrl` | string | `null` | If set, submissions get `POST`ed here as JSON. |
-| `onSubmit` | function | `null` | Called with the submission `data` object. |
-| `autoOpen` | boolean | `false` | Opens the dialog the moment `init()` runs. |
+| Option | Type | Default | Description |
+|------|------|---------|-------------|
+| `placement` | CSS selector | `"#root"` | Element where the widget is mounted. |
+| `title` | string | `"Feedback"` | Dialog title. |
+| `triggerText` | string | `"Feedback"` | Text shown on the floating trigger button. |
+| `primaryColor` | hex string | `null` | Accent color applied through CSS variables. |
+| `apiUrl` | string | `null` | If provided, submissions are sent here using a JSON POST request. |
+| `onSubmit` | function | `null` | Callback invoked with the submitted data. |
+| `autoOpen` | boolean | `false` | Opens the widget automatically after initialization. |
 
-### The API
+## Public API
 
 ```js
-const w = ShadowKit.widget;
-w.setConfig({ ... });  // merge in your options
-w.init();              // mount it (safe to call once)
-w.open();              // pop the dialog open from your own code
-w.update();            // re-render with the current options
-w.destroy();           // tear it down and clean up
+const widget = ShadowKit.widget;
+
+widget.setConfig({ ... });
+widget.init();
+widget.open();
+widget.update();
+widget.destroy();
 ```
 
-### What a submission looks like
+## Submission format
 
 ```json
 {
   "rating": 4,
   "category": "Feature request",
   "email": "you@example.com",
-  "comment": "…",
+  "comment": "...",
   "submittedAt": "2026-07-05T10:00:00.000Z"
 }
 ```
 
-## Making it yours
+## Customizing the starter
 
-The feedback widget is scaffolding — here's how to build your own thing on top of it:
+The feedback widget is simply an example. To build your own widget:
 
-1. Swap out `src/components/FeedbackWidget.jsx` for your own UI.
-2. Pull in more shadcn/ui primitives under `src/components/ui/` as you need them. Just remember the two rules: keep the `tw-` prefix, and for anything that uses a Radix Portal, pass it the shadow-root `container` (see how the Dialog does it).
-3. Tweak the design tokens in `src/index.css` and the theme in `tailwind.config.js` to match your brand.
-4. Rename the global namespace and bundle name in `src/main.jsx` and `vite.config.js` so they're yours, not `ShadowKit`.
+1. Replace `src/components/FeedbackWidget.jsx` with your own UI.
+2. Add more shadcn/ui components under `src/components/ui/` as needed. If a component uses a Radix Portal, remember to pass it the shadow root's `container`.
+3. Update the design tokens in `src/index.css` and customize the theme in `tailwind.config.js`.
+4. Rename the global namespace and bundle name in `src/main.jsx` and `vite.config.js` so they match your project instead of `ShadowKit`.
 
 ## License
 
 MIT
+````
