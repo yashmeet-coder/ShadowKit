@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shadow DOM Widget — an embeddable widget scaffold</title>
+  <title>ShadowKit — an embeddable widget scaffold</title>
   <meta name="description"
     content="A scaffold for embeddable widgets built with React, shadcn/ui and the Shadow DOM. Styles stay fully isolated from the host page." />
   <style>
@@ -128,7 +128,7 @@
 <body>
   <div class="wrap">
     <p class="eyebrow">Live demo</p>
-    <h1>Shadow DOM Widget</h1>
+    <h1>ShadowKit</h1>
     <p class="lead">
       An embeddable widget scaffold built with React, shadcn/ui and the Shadow DOM.
       Drop it onto any page with a single <code>&lt;script&gt;</code> tag — its styles
@@ -169,12 +169,12 @@
 
   <!-- Dev: load the source entry directly.
        Production: replace with the built bundle instead —
-       <script src="./dist/shadow-dom-widget.js"></script> -->
+       <script src="./dist/shadowkit.js"></script> -->
   <script type="module" src="/src/main.jsx"></script>
   <script type="module">
     // Wait for the widget's global namespace to be defined, then boot it.
     const boot = () => {
-      const ns = window.ShadowDomWidget;
+      const ns = window.ShadowKit;
       if (!ns) return setTimeout(boot, 30);
       ns.widget.setConfig({
         placement: '#feedback-widget',

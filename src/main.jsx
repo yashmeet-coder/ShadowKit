@@ -9,8 +9,8 @@ import App from "./App";
 // plain JS, regardless of the fact that the widget is built with React under
 // the hood:
 //
-//   ShadowDomWidget.widget.setConfig({ ... });
-//   ShadowDomWidget.widget.init();
+//   ShadowKit.widget.setConfig({ ... });
+//   ShadowKit.widget.init();
 //
 // The React app itself is mounted into a plain <div> appended to the host's
 // `placement` element. The Shadow DOM boundary is created *inside* App.jsx
@@ -45,7 +45,7 @@ class Widget {
     const placementNode = document.querySelector(this.options.placement);
     if (!placementNode) {
       console.warn(
-        `[ShadowDomWidget] placement "${this.options.placement}" not found in DOM.`
+        `[ShadowKit] placement "${this.options.placement}" not found in DOM.`
       );
       return;
     }
@@ -83,7 +83,7 @@ class Widget {
 const widget = new Widget();
 
 // Expose on a namespaced global for UMD/script-tag consumers.
-window.ShadowDomWidget = window.ShadowDomWidget || {};
-window.ShadowDomWidget.widget = widget;
+window.ShadowKit = window.ShadowKit || {};
+window.ShadowKit.widget = widget;
 
 export { widget, Widget };

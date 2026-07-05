@@ -80,7 +80,7 @@ function App(props) {
   return (
     // react-shadow's root.div renders its children into an attached shadow root
     // on this element. `className` is applied to the host element.
-    <root.div ref={shadowRef} className="shadow-dom-widget" style={{ position: "relative", zIndex: 99999 }}>
+    <root.div ref={shadowRef} className="shadowkit" style={{ position: "relative", zIndex: 99999 }}>
       {/* Inject the compiled, prefixed Tailwind CSS *inside* the shadow root. */}
       <style type="text/css">{css}</style>
 

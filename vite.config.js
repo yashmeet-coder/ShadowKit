@@ -12,8 +12,8 @@ export default defineConfig({
     rollupOptions: {
       input: './src/main.jsx',
       output: {
-        entryFileNames: 'shadow-dom-widget.js',
-        name: 'ShadowDomWidget',
+        entryFileNames: 'shadowkit.js',
+        name: 'ShadowKit',
         format: 'umd',
       },
     },
