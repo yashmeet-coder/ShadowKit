@@ -1,4 +1,4 @@
-````md
+
 # ShadowKit
 
 A starter kit for building **embeddable widgets** with React, [shadcn/ui](https://ui.shadcn.com), Tailwind CSS, and the **Shadow DOM**. It ships with a simple **feedback widget** so you can clone the repo, run it, and immediately see a working example.
@@ -175,7 +175,3 @@ The feedback widget is simply an example. To build your own widget:
 3. Update the design tokens in `src/index.css` and customize the theme in `tailwind.config.js`.
 4. Rename the global namespace and bundle name in `src/main.jsx` and `vite.config.js` so they match your project instead of `ShadowKit`.
 
-## License
-
-MIT
-````
