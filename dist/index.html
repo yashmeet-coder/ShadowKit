@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShadowKit — an embeddable widget scaffold</title>
+  <meta name="description"
+    content="A scaffold for embeddable widgets built with React, shadcn/ui and the Shadow DOM. Styles stay fully isolated from the host page." />
+  <style>
+    :root {
+      --fg: #18181b;
+      --fg-muted: #52525b;
+      --fg-subtle: #71717a;
+      --border: #e4e4e7;
+      --surface: #fafafa;
+      --accent: #4f46e5;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: var(--fg);
+      line-height: 1.65;
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 6rem 1.5rem 9rem;
+    }
+
+    .eyebrow {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+      margin: 0 0 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+      margin: 0 0 1rem;
+    }
+
+    .lead {
+      font-size: 1.125rem;
+      color: var(--fg-muted);
+      margin: 0 0 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.0625rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin: 0 0 0.5rem;
+    }
+
+    p {
+      margin: 0 0 1rem;
+    }
+
+    .section {
+      border-top: 1px solid var(--border);
+      padding-top: 2rem;
+      margin-top: 2.5rem;
+    }
+
+    .muted {
+      color: var(--fg-muted);
+    }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.875em;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    a:hover { text-decoration: underline; }
+
+    ol {
+      padding-left: 1.25rem;
+      color: var(--fg-muted);
+      margin: 0;
+    }
+    li { margin: 0.35rem 0; }
+
+    /* A plain host-page button. It is styled by the page — note that it looks
+       nothing like the widget's own buttons, which live in an isolated shadow
+       root and are unaffected by these rules. */
+    .host-button {
+      font: inherit;
+      font-weight: 500;
+      color: var(--fg);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .host-button:hover { background: var(--surface); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <p class="eyebrow">Live demo</p>
+    <h1>ShadowKit</h1>
+    <p class="lead">
+      An embeddable widget scaffold built with React, shadcn/ui and the Shadow DOM.
+      Drop it onto any page with a single <code>&lt;script&gt;</code> tag — its styles
+      never leak out, and the host page's styles never leak in.
+    </p>
+
+    <div class="section">
+      <h2>Style isolation</h2>
+      <p class="muted">
+        Everything on this page is styled by the host page. The
+        <strong>Feedback</strong> button in the bottom-right corner is not — it lives
+        inside a shadow root, so its styling is completely independent of this page's CSS.
+        For comparison, here is an ordinary host-page button:
+      </p>
+      <p><button type="button" class="host-button">Host-page button</button></p>
+    </div>
+
+    <div class="section">
+      <h2>Try it</h2>
+      <ol>
+        <li>Click the <strong>Feedback</strong> button in the bottom-right corner.</li>
+        <li>Give a rating, choose a category, and leave a comment.</li>
+        <li>Submit — the payload is logged to the console.</li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>Learn more</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        See the <a href="./README.md">README</a> for how the isolation works and how to
+        build your own widget on top of this scaffold.
+      </p>
+    </div>
+  </div>
+
+  <!-- The widget mounts into this element (configured as `placement` below). -->
+  <div id="feedback-widget"></div>
+
+       <script src="./shadowkit.js"></script>
+  <!-- <script type="module" src="/src/main.jsx"></script> -->
+  <!-- This script is used by Vite's dev server to inject your widget for local development. -->
+  <!-- <script type="module" src="/src/main.jsx"></script> -->
+  <script type="module">
+    // Wait for the widget's global namespace to be defined, then boot it.
+    const boot = () => {
+      const ns = window.ShadowKit;
+      if (!ns) return setTimeout(boot, 30);
+      ns.widget.setConfig({
+        placement: '#feedback-widget',
+        title: 'Send us feedback',
+        triggerText: 'Feedback',
+        primaryColor: '#4f46e5',
+        // Optional: POST submissions to a backend.
+        // apiUrl: 'https://example.com/api/feedback',
+        onSubmit: (data) => {
+          console.log('Feedback submitted:', data);
+          alert('Thanks for the feedback!\n\n' + JSON.stringify(data, null, 2));
+        },
+      });
+      ns.widget.init();
+    };
+    boot();
+  </script>
+</body>
+
+</html>
